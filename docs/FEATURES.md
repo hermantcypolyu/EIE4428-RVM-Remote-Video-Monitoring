@@ -208,10 +208,10 @@ pip install numpy aiohttp opencv-python-headless
 
 启用扩展功能：
 ```bash
-# 人脸识别和情绪识别
-pip install deepface
+# 人脸识别和情绪识别（MediaPipe）
+pip install mediapipe
 
-# 手势识别
+# 手势识别（MediaPipe）
 pip install mediapipe
 
 # 音频

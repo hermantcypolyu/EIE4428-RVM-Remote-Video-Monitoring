@@ -1,22 +1,19 @@
 # Runtime dependencies for the RVM server.
 # Install with:  pip install -r requirements.txt
+
+# Core (always required)
 numpy>=1.24
 aiohttp>=3.9
 opencv-python-headless>=4.8
 
-# Optional dependencies for extended features
-# Uncomment to enable specific features:
+# Optional dependencies for the extended monitoring features.
+# The system degrades gracefully if any of these are missing: the feature
+# reports itself "unavailable" via /api/features instead of crashing.
 
-# Face recognition and emotion detection
-deepface>=0.0.79
-# dlib>=19.24  # NOTE: dlib compilation fails on Python 3.14, skipping for now
-
-# Hand gesture recognition
+# Face recognition, emotion recognition and hand-gesture recognition
+# (MediaPipe FaceLandmarker + HandLandmarker tasks API)
 mediapipe>=0.10
 
-# Audio capture and analysis
+# Audio capture and event analysis
 pyaudio>=0.2.13
-
-# Facial expression recognition (alternative to deepface)
-# fer>=22.5.0
 

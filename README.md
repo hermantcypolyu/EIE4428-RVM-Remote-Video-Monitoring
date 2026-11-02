@@ -17,6 +17,8 @@ measured and tunable.
 
 ## Quick start
 
+**Windows (PowerShell):**
+
 ```powershell
 # 1. Create the environment
 python -m venv .venv
@@ -28,18 +30,35 @@ python -m venv .venv
 # 3. Open http://localhost:8099
 ```
 
+**macOS / Linux:**
+
+```bash
+# 1. Create the environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+
+# 2. Run the server (no webcam needed -- uses a generated scene)
+python run_server.py --no-camera --port 8099
+
+# 3. Open http://localhost:8099
+```
+
+`run_server.py` inserts `src/` on the path itself, so it also works without
+`pip install` — useful for a quick run.
+
 With a webcam: drop `--no-camera`, or select one with `--camera 1`.
 
 Run the tests:
 
-```powershell
-.\.venv\Scripts\python.exe -m pytest          # 373 tests, ~10s
+```bash
+python -m pytest
 ```
 
 Measure the encoder on the machine you are going to demonstrate on:
 
-```powershell
-.\.venv\Scripts\python.exe tools\benchmark.py --width 320 --height 240
+```bash
+python tools/benchmark.py --width 320 --height 240
 ```
 
 ---
@@ -68,8 +87,8 @@ missing, the module reports itself unavailable instead of crashing the stream.
 | Feature | Module | Depends on |
 |---|---|---|
 | **Object tracking** — persistent IDs across frames (IoU + centroid) | `src/rvm/analysis/track.py` | none |
-| **Face recognition** — identify registered people by embedding | `src/rvm/analysis/recognition.py` | `deepface` |
-| **Emotion recognition** — 7-class facial expression | `src/rvm/analysis/recognition.py` | `deepface` |
+| **Face recognition** — identify registered people by embedding | `src/rvm/analysis/recognition.py` | `mediapipe` |
+| **Emotion recognition** — 7-class facial expression (blendshape) | `src/rvm/analysis/recognition.py` | `mediapipe` |
 | **Gesture recognition** — open palm, fist, pointing, thumbs up/down, peace, OK | `src/rvm/analysis/gesture.py` | `mediapipe` |
 | **Audio monitoring** — loud sound, speech, silence, gunshot, glass break, alarm | `src/rvm/audio/` | `pyaudio` |
 
@@ -77,7 +96,8 @@ Enable them with `pip install -r requirements.txt` (optional extras are listed
 there) and see [`docs/FEATURES.md`](docs/FEATURES.md) for the API and
 [`examples/demo_features.py`](examples/demo_features.py) for a runnable demo.
 The extended modules are exposed over the API at `/api/emotions`,
-`/api/gestures` and `/api/audio/events`.
+`/api/gestures`, `/api/tracks`, `/api/faces/identities` and `/api/audio/events`;
+`/api/features` reports which analyzers are currently available.
 
 ### Measured results
 
@@ -167,7 +187,7 @@ src/rvm/
   analysis/   quality.py      PSNR, SSIM
               detect.py       MotionDetector, FaceDetector
               track.py        CentroidTracker — persistent object IDs
-              recognition.py  FaceRecognizer, EmotionRecognizer (DeepFace)
+              recognition.py  FaceRecognizer, EmotionRecognizer (MediaPipe)
               gesture.py      GestureRecognizer (MediaPipe Hands)
   audio/      capture.py      AudioCapture — microphone access
               analysis.py     AudioAnalyzer — event detection
@@ -213,10 +233,11 @@ under 2 ms (median) instead of timing out.
 the number a user cares about is distortion. That loop is closed by measuring PSNR against
 the encoder's own reconstruction — the picture the receiver actually displays.
 
-**Known limitations (stated plainly):** video only, no audio; the custom codec is a
-teaching implementation and is considerably less efficient than H.264, which adds larger
-transform blocks, multiple reference frames, deblocking and intra prediction; frame rate is
-bounded by Python rather than by the algorithm, and 640×480 is consequently not real time.
+**Known limitations (stated plainly):** the core stream is video only; audio is captured
+and analysed locally (optional module) but not streamed to remote viewers. The custom
+codec is a teaching implementation and is considerably less efficient than H.264, which
+adds larger transform blocks, multiple reference frames, deblocking and intra prediction.
+Frame rate is bounded by Python rather than by the algorithm, so 640×480 is not real time.
 
 ---
 
@@ -225,12 +246,14 @@ bounded by Python rather than by the algorithm, and 640×480 is consequently not
 Every module was built test-first — tests were written before the implementation, and each
 commit pairs the tests with the code that satisfies them.
 
-```powershell
-.\.venv\Scripts\python.exe -m pytest              # full suite
-.\.venv\Scripts\python.exe -m pytest tests/test_video.py   # one module
-.\.venv\Scripts\python.exe verify_system.py        # end-to-end live check
-.\.venv\Scripts\python.exe tools\benchmark.py      # encoder measurement
+```bash
+python -m pytest                              # full suite
+python -m pytest tests/test_video.py          # one module
+python verify_system.py                       # end-to-end live check
+python tools/benchmark.py                     # encoder measurement
 ```
+
+(Tests also run without `pip install`: `pyproject.toml` puts `src` on the path.)
 
 `verify_system.py` runs the real application in-process and exercises it over HTTP and
 WebSocket: page load, live stream, status, snapshot, both picture views, config, recording
@@ -242,9 +265,9 @@ makes the wall-clock average wander while the cost of coding one picture does no
 
 ### Report
 
-```powershell
-.\.venv\Scripts\python.exe tools\build_report.py     # fill the course DOCX template
-.\.venv\Scripts\python.exe tools\verify_report.py    # structural check
+```bash
+python tools/build_report.py     # fill the course DOCX template
+python tools/verify_report.py    # structural check
 ```
 
 Output: `docs/EIE4428-mini-project-report-RVM.docx` (built from the supplied template).
@@ -254,9 +277,9 @@ supplied. Give them on the command line — the name then appears on the cover
 sheet *and* in the co-operation section, and the "to be completed" note
 disappears by itself:
 
-```powershell
-.\.venv\Scripts\python.exe tools\build_report.py `
-    --member "Chan Tai Man | 20075335D" `
+```bash
+python tools/build_report.py \
+    --member "Chan Tai Man | 20075335D" \
     --member "Wong Siu Ming | 20075336E"
 ```
 
